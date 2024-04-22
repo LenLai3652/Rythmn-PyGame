@@ -21,6 +21,9 @@ showing_array = []
 pointer = 0
 result_combo = 0
 result_score = 0
+result_perfect = 0
+result_good = 0
+result_miss = 0
 
 #載入圖片
 note = pygame.image.load("images\\note.png").convert_alpha()
@@ -29,6 +32,9 @@ start_menu = pygame.image.load("images\start_window.png").convert_alpha()
 start_button = pygame.image.load("images\start_button.png").convert_alpha()
 result_bg = pygame.image.load("images\\result_window.png").convert_alpha()
 cover = pygame.image.load("images\\idol.jpg").convert_alpha()
+j_perfect = pygame.image.load("images\\perfect.png").convert_alpha()
+j_good = pygame.image.load("images\\good.png").convert_alpha()
+j_miss = pygame.image.load("images\\miss.png").convert_alpha()
 
 #調整圖片
 note = pygame.transform.scale(note, (80, 20))
@@ -38,6 +44,10 @@ start_menu = pygame.transform.scale(start_menu, (800, 600))
 start_button = pygame.transform.scale(start_button, (400, 200))
 result_bg = pygame.transform.scale(result_bg, (800, 600))
 cover = pygame.transform.scale(cover, (275, 275))
+j_perfect = pygame.transform.scale(j_perfect, (120, 40))
+j_good = pygame.transform.scale(j_good, (120, 40))
+j_miss = pygame.transform.scale(j_miss, (120, 40))
+juty = (j_miss, j_perfect, j_good)
 
 #載入音樂
 music_location = "images\\idol.mp3"
@@ -101,7 +111,7 @@ class Note():
         self.block = block
         self.noty = noty
         self.order = order
-        self.hit = False
+        self.hit = 0
         self.show = True
 
     def ycor_update(self, time_pass):
@@ -110,8 +120,15 @@ class Note():
 
     def check(self, time_pass):
         block_check = keys[self.block]
-        time_check = abs(time_pass - self.arrive_time) <= 0.1
-        return block_check and time_check
+        time_check = abs(self.arrive_time - time_pass) <= 0.2
+        if block_check and time_check:
+            if abs(self.arrive_time - time_pass) <= 0.1:
+                return 1
+            elif abs(self.arrive_time - time_pass) <= 0.2:
+                return 2
+            else:
+                return 0
+        return 0
 
 #譜面
 def showingArray_appending(time_pass):
@@ -140,8 +157,8 @@ def note_displaying(time_pass):
 #消去音符
 def note_remove(time_pass):
     for one_note in showing_array:
-        if  one_note.check(time_pass):
-            one_note.hit = True
+        if  one_note.check(time_pass) != 0:
+            one_note.hit = one_note.check(time_pass)
             one_note.show = False
 
 #事件
@@ -182,6 +199,9 @@ def draw_bg():
     global started
     global result_combo
     global result_score
+    global result_perfect
+    global result_good
+    global result_miss
     if started == 1:
         pygame.draw.rect(wn, (0, 0, 0), bg_back)
         pygame.draw.rect(wn, (255, 255, 255), border_left_line)
@@ -210,11 +230,11 @@ def draw_bg():
         wn.blit(font.render(f"O", True, (255, 100, 200)), (590, 460))
     elif started == 2:
         wn.blit(cover, (80, 50)) 
-        wn.blit(font.render(f"IDOL(TV size)", True, (0, 0, 0)), (400, 80))
-        wn.blit(font.render(f"{result_score}", True, (0, 0, 0)), (400, 160))
-        wn.blit(font.render(f"{result_combo}", True, (0, 0, 0)), (400, 240))
-        wn.blit(font.render(f"GOOD", True, (0, 0, 0)), (520, 240))
-        wn.blit(font.render(f"MISS", True, (0, 0, 0)), (650, 240))
+        wn.blit(font.render(f"{result_score}", True, (0, 0, 0)), (400, 80))
+        wn.blit(font.render(f"{result_combo}", True, (0, 0, 0)), (400, 160))
+        wn.blit(font.render(f"{result_perfect}", True, (0, 0, 0)), (400, 240))
+        wn.blit(font.render(f"{result_good}", True, (0, 0, 0)), (520, 240))
+        wn.blit(font.render(f"{result_miss}", True, (0, 0, 0)), (650, 240))
 
 #繪製按鍵效果
 def draw_press():
@@ -263,26 +283,42 @@ def post_time_handle(loop_start_time):
     if loop_time < 0.001:
         time.sleep(0.001 - loop_time) #若迴圈執行時間少於0.001秒則等待
 
-#顯示分數
-def score_showing():
+#判定
+def judge():
     combo = 0
     score = 0
+    perfect = 0
+    good = 0
+    miss = 0
     combo_max = 0
     combo_color = (238, 130, 238)
     note_died_count = 0
     global result_score
     global result_combo
+    global result_perfect
+    global result_good
+    global result_miss
+    judge_array = []
     for one_note in showing_array:
         if one_note.arrive_time < time_pass:
             note_died_count += 1
     for i in range(note_died_count):
-        if showing_array[i].hit:
+        if showing_array[i].hit != 0:
             combo += 1
-            score += 1
+            if showing_array[i].hit == 1:
+                judge_array.append(1)
+                perfect += 1
+                score += 3
+            elif showing_array[i].hit == 2:
+                judge_array.append(2)
+                good += 1
+                score += 1
             if combo > combo_max:
                 combo_max = combo
         else:
             combo = 0
+            judge_array.append(0)
+            miss += 1
             combo_color = (255, 255, 255)
     # show combo and score
     if started == 1:
@@ -294,9 +330,14 @@ def score_showing():
         score_show2 = font.render(f"{score}", True, combo_color)
         wn.blit(score_show1, (680, 280))
         wn.blit(score_show2, (720, 320))
-    elif started == 2:
         result_score = score
         result_combo = combo_max
+        result_perfect = perfect
+        result_good = good
+        result_miss = miss
+        if len(judge_array) != 0 and len(judge_array) == note_died_count:
+            if showing_array[-1].arrive_time - time_pass  <= -0.001:
+                wn.blit(juty[judge_array[-1]],(340, 400))
 
 #主程式
 while running:
@@ -308,6 +349,6 @@ while running:
     note_remove(time_pass)
     showingArray_appending(time_pass)
     note_displaying(time_pass)
-    score_showing()
+    judge()
     pygame.display.update() #更新視窗
     post_time_handle(loop_start_time)
