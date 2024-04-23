@@ -50,7 +50,7 @@ j_miss = pygame.transform.scale(j_miss, (120, 40))
 juty = (j_miss, j_perfect, j_good)
 
 #載入音樂
-music_location = "images\\idol.mp3"
+music_location = "images\\idol.wav"
 track = pygame.mixer.music.load(music_location)
 
 #字型設定
@@ -81,7 +81,7 @@ note_types = []
 
 with open(f"notes_and_time\\times.txt", "r") as time_f:
     for i in time_f:
-        i = int(i)
+        i = float(i)
         i /= 1000
         i = round(i, 4)
         times_arrive.append(i)
@@ -233,8 +233,8 @@ def draw_bg():
         wn.blit(font.render(f"{result_score}", True, (0, 0, 0)), (400, 80))
         wn.blit(font.render(f"{result_combo}", True, (0, 0, 0)), (400, 160))
         wn.blit(font.render(f"{result_perfect}", True, (0, 0, 0)), (400, 240))
-        wn.blit(font.render(f"{result_good}", True, (0, 0, 0)), (520, 240))
-        wn.blit(font.render(f"{result_miss}", True, (0, 0, 0)), (650, 240))
+        wn.blit(font.render(f"{result_good}", True, (0, 0, 0)), (545, 240))
+        wn.blit(font.render(f"{result_miss}", True, (0, 0, 0)), (670, 240))
 
 #繪製按鍵效果
 def draw_press():
@@ -329,14 +329,13 @@ def judge():
         score_show1 = font.render(f"SCORE", True, combo_color)
         score_show2 = font.render(f"{score}", True, combo_color)
         wn.blit(score_show1, (680, 280))
-        wn.blit(score_show2, (720, 320))
+        wn.blit(score_show2, (700, 320))
         result_score = score
         result_combo = combo_max
         result_perfect = perfect
         result_good = good
         result_miss = miss
-        if len(judge_array) != 0 and len(judge_array) == note_died_count:
-            if showing_array[-1].arrive_time - time_pass  <= -0.001:
+        if len(judge_array) != 0:
                 wn.blit(juty[judge_array[-1]],(340, 400))
 
 #主程式
